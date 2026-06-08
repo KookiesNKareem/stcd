@@ -1,0 +1,15 @@
+# Core
+numpy>=2.0
+scipy>=1.13
+torch>=2.4
+
+# Eval / viz
+matplotlib>=3.8
+scikit-learn>=1.4
+scikit-image>=0.22   # SSIM for reconstruction eval
+
+# Data IO
+h5py>=3.10
+
+# Optional (downstream reconstruction LPIPS metric)
+# lpips>=0.1.4

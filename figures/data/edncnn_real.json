@@ -1,0 +1,182 @@
+{
+  "records": [
+    {
+      "STCD": 0.7520687500000001,
+      "EDnCNN (real)": 0.8478812499999999,
+      "time-surface": 0.7980937499999999,
+      "BAF": 0.7373062499999999,
+      "KNoise": 0.484040625,
+      "MLPF": 0.78026875,
+      "_scene": "bike"
+    },
+    {
+      "STCD": 0.77285,
+      "EDnCNN (real)": 0.7337562500000001,
+      "time-surface": 0.81291875,
+      "BAF": 0.7108125000000002,
+      "KNoise": 0.492609375,
+      "MLPF": 0.827696875,
+      "_scene": "bike"
+    },
+    {
+      "STCD": 0.81148125,
+      "EDnCNN (real)": 0.8626562500000001,
+      "time-surface": 0.82045625,
+      "BAF": 0.745853125,
+      "KNoise": 0.47384374999999995,
+      "MLPF": 0.7956031250000001,
+      "_scene": "bike"
+    },
+    {
+      "STCD": 0.8054000000000001,
+      "EDnCNN (real)": 0.7239,
+      "time-surface": 0.7365749999999999,
+      "BAF": 0.66496875,
+      "KNoise": 0.5278187499999999,
+      "MLPF": 0.6692125,
+      "_scene": "classroom"
+    },
+    {
+      "STCD": 0.78298125,
+      "EDnCNN (real)": 0.7042625000000001,
+      "time-surface": 0.6986812499999999,
+      "BAF": 0.625546875,
+      "KNoise": 0.502709375,
+      "MLPF": 0.60718125,
+      "_scene": "classroom"
+    },
+    {
+      "STCD": 0.8053343749999999,
+      "EDnCNN (real)": 0.70055625,
+      "time-surface": 0.7228625000000001,
+      "BAF": 0.6511375,
+      "KNoise": 0.510725,
+      "MLPF": 0.60640625,
+      "_scene": "classroom"
+    },
+    {
+      "STCD": 0.84831875,
+      "EDnCNN (real)": 0.7736000000000001,
+      "time-surface": 0.8058749999999999,
+      "BAF": 0.7465312499999999,
+      "KNoise": 0.529690625,
+      "MLPF": 0.7237125,
+      "_scene": "conference"
+    },
+    {
+      "STCD": 0.855028125,
+      "EDnCNN (real)": 0.8783500000000001,
+      "time-surface": 0.86314375,
+      "BAF": 0.75341875,
+      "KNoise": 0.48451249999999996,
+      "MLPF": 0.8214406249999999,
+      "_scene": "soccer"
+    },
+    {
+      "STCD": 0.81564375,
+      "EDnCNN (real)": 0.87840625,
+      "time-surface": 0.8460625,
+      "BAF": 0.7785968750000001,
+      "KNoise": 0.5023312499999999,
+      "MLPF": 0.811340625,
+      "_scene": "soccer"
+    },
+    {
+      "STCD": 0.81578125,
+      "EDnCNN (real)": 0.8478062500000001,
+      "time-surface": 0.8286749999999999,
+      "BAF": 0.79175625,
+      "KNoise": 0.519240625,
+      "MLPF": 0.8044531249999998,
+      "_scene": "soccer"
+    },
+    {
+      "STCD": 0.7550312500000002,
+      "EDnCNN (real)": 0.7603312500000001,
+      "time-surface": 0.6740249999999999,
+      "BAF": 0.64146875,
+      "KNoise": 0.5010843749999999,
+      "MLPF": 0.6009937499999999,
+      "_scene": "stairs"
+    },
+    {
+      "STCD": 0.7356750000000001,
+      "EDnCNN (real)": 0.78943125,
+      "time-surface": 0.752725,
+      "BAF": 0.717059375,
+      "KNoise": 0.50614375,
+      "MLPF": 0.71993125,
+      "_scene": "stairs"
+    },
+    {
+      "STCD": 0.745840625,
+      "EDnCNN (real)": 0.81884375,
+      "time-surface": 0.6460687500000001,
+      "BAF": 0.6532718750000001,
+      "KNoise": 0.518071875,
+      "MLPF": 0.5272875,
+      "_scene": "stairs"
+    },
+    {
+      "STCD": 0.8143937499999999,
+      "EDnCNN (real)": 0.7109625,
+      "time-surface": 0.72919375,
+      "BAF": 0.6279406250000001,
+      "KNoise": 0.587275,
+      "MLPF": 0.6562375,
+      "_scene": "toys"
+    },
+    {
+      "STCD": 0.8201,
+      "EDnCNN (real)": 0.7252812500000001,
+      "time-surface": 0.75175625,
+      "BAF": 0.668075,
+      "KNoise": 0.5874625,
+      "MLPF": 0.638178125,
+      "_scene": "toys"
+    },
+    {
+      "STCD": 0.8116843749999999,
+      "EDnCNN (real)": 0.73513125,
+      "time-surface": 0.716275,
+      "BAF": 0.57901875,
+      "KNoise": 0.531784375,
+      "MLPF": 0.64719375,
+      "_scene": "toys"
+    }
+  ],
+  "mean_auc": {
+    "STCD": 0.79672578125,
+    "EDnCNN (real)": 0.780697265625,
+    "MLPF": 0.70232109375,
+    "time-surface": 0.76271171875,
+    "BAF": 0.6932976562500001,
+    "KNoise": 0.516208984375
+  },
+  "ci95": {
+    "STCD": 0.017457341053165827,
+    "EDnCNN (real)": 0.03213609169202136,
+    "MLPF": 0.046879506639787794,
+    "time-surface": 0.03142544862537661,
+    "BAF": 0.03057812026449567,
+    "KNoise": 0.0159157904988854
+  },
+  "n_recordings": 16,
+  "paired_stcd_vs_edncnn": {
+    "delta": 0.01602851562499997,
+    "wilcoxon_p": 0.274444580078125,
+    "ttest_p": 0.38775260946694257
+  },
+  "paired_stcd_vs_mlpf": {
+    "delta": 0.09440468750000004,
+    "wilcoxon_p": 0.00213623046875,
+    "ttest_p": 0.0008550892103258981
+  },
+  "flops_per_event": {
+    "STCD": 13,
+    "EDnCNN_real": 282581248,
+    "MLPF": 1980
+  },
+  "label_source": "APS brightness-change (real-data proxy)",
+  "note": "EDnCNN trained on EPM labels, MLPF on DND21; both evaluated on APS-motion labels (cross-label). MLPF = published 98->10->1 weights."
+}
