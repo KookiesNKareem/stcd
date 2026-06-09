@@ -1,0 +1,3 @@
+set_io CLK 35
+set_io TX 9
+set_io LEDR_N 11
