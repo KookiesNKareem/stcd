@@ -23,7 +23,7 @@ top_meas.json: $(MSRCS)
 	yosys -p "read_verilog $(MSRCS); synth_ice40 -spram -top top_meas -json $@"
 top_meas.asc: top_meas.json $(MPCF)
 	nextpnr-ice40 --up5k --package sg48 --json top_meas.json --pcf $(MPCF) \
-		--freq $(FREQ) --seed $(SEED) --asc $@
+		--freq 24 --seed $(SEED) --asc $@
 top_meas.bin: top_meas.asc
 	icepack $< $@
 
@@ -36,8 +36,8 @@ prog: $(TOP).bin
 timing: $(TOP).asc
 	icetime -d up5k -mtr $(TOP).rpt $(TOP).asc
 
-meas-sim:                              # verify the measurement harness in sim
-	iverilog -g2012 -o meas.vvp tb_meas.v top_meas.v uart_tx.v stcd_frontend.v && vvp meas.vvp; rm -f meas.vvp
+meas-sim:                              # verify the measurement harness in sim (PLL bypassed)
+	iverilog -g2012 -DSIM -o meas.vvp tb_meas.v top_meas.v uart_tx.v stcd_frontend.v && vvp meas.vvp; rm -f meas.vvp
 meas: top_meas.bin                     # build the on-board measurement bitstream
 meas-prog: top_meas.bin                # flash it, then run:  python read_uart.py
 	iceprog $<

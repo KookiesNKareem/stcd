@@ -50,7 +50,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port")
     ap.add_argument("--baud", type=int, default=115200)
-    ap.add_argument("--clk", type=float, default=12e6, help="board clock in Hz (12e6 = iCEBreaker osc)")
+    ap.add_argument("--clk", type=float, default=24e6, help="core clock in Hz (24e6 = PLL-multiplied; 12e6 = bare osc)")
     ap.add_argument("--n", type=int, default=5, help="packets to read")
     a = ap.parse_args()
 

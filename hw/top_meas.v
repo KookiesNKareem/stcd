@@ -6,19 +6,39 @@
 // window of NWIN events, then reports {cycles, n_events, n_kept} over UART
 // (115200 8N1) as a repeating 14-byte packet: 0xAA 0x55 then three big-endian
 // u32s. Host (read_uart.py) computes cycles/event = cycles/n_events and
-// throughput = f_clk / (cycles/event). Measures the core on real silicon.
+// throughput = f_core / (cycles/event).
+//
+// A PLL multiplies the 12 MHz board oscillator to F_CORE (default 24 MHz, the
+// place-and-route f_max), so the measured throughput is taken at the core's
+// operating clock, not the bare oscillator. Define SIM to bypass the PLL for
+// Icarus Verilog (which has no SB_PLL40 model).
 module top_meas #(
     parameter [31:0]  NWIN = 32'd1000000,    // events per measurement window
-    parameter integer DIV  = 104             // 12 MHz / 115200 baud
+    parameter integer DIV  = 208             // 24 MHz / 115200 baud
 )(
     input  wire CLK,
     output wire TX,
     output wire LEDR_N
 );
-    // ---- power-on reset ----------------------------------------------------
+    // ---- core clock: 12 MHz osc -> 24 MHz via PLL (bypassed in sim) ---------
+`ifdef SIM
+    wire clk_core = CLK;
+    wire pll_lock = 1'b1;
+`else
+    wire clk_core, pll_lock;
+    SB_PLL40_PAD #(
+        .FEEDBACK_PATH("SIMPLE"),
+        .DIVR(4'd0), .DIVF(7'd63), .DIVQ(3'd5), .FILTER_RANGE(3'b001)   // 12 -> 24 MHz
+    ) pll (
+        .PACKAGEPIN(CLK), .PLLOUTGLOBAL(clk_core), .LOCK(pll_lock),
+        .RESETB(1'b1), .BYPASS(1'b0)
+    );
+`endif
+
+    // ---- power-on reset (held until PLL locked) ----------------------------
     reg [3:0] por = 4'hF;
-    always @(posedge CLK) if (por != 0) por <= por - 1'b1;
-    wire rst = (por != 0);
+    always @(posedge clk_core) if (por != 0) por <= por - 1'b1;
+    wire rst = (por != 0) | ~pll_lock;
 
     // ---- LFSR pseudo-event source (back-to-back) ---------------------------
     reg  [30:0] lfsr = 31'h1;
@@ -29,22 +49,22 @@ module top_meas #(
     wire        ev_valid = running & ready;
 
     stcd_frontend dut (
-        .clk(CLK), .rst(rst), .ev_valid(ev_valid),
+        .clk(clk_core), .rst(rst), .ev_valid(ev_valid),
         .ev_x(lfsr[6:0]), .ev_y(lfsr[13:7]), .ev_t(lfsr[21:14]),
         .ev_ready(ready), .out_valid(ov), .out_x(ox), .out_y(oy));
 
     // ---- counters ----------------------------------------------------------
     reg [31:0] cyc = 0, nev = 0, kept = 0;
-    always @(posedge CLK) begin
+    always @(posedge clk_core) begin
         if (rst) begin
             cyc <= 0; nev <= 0; kept <= 0; running <= 1'b1; started <= 1'b0; lfsr <= 31'h1;
         end else if (running) begin
             if (ev_valid) started <= 1'b1;
-            if (started)  cyc <= cyc + 1'b1;           // count from the first accept
+            if (started)  cyc <= cyc + 1'b1;
             if (ev_valid) begin
                 lfsr <= {lfsr[29:0], fb};
                 nev  <= nev + 1'b1;
-                if (nev == NWIN - 1) running <= 1'b0;  // this is the NWIN-th event
+                if (nev == NWIN - 1) running <= 1'b0;
             end
             if (ov) kept <= kept + 1'b1;
         end
@@ -69,7 +89,7 @@ module top_meas #(
         endcase
     endfunction
 
-    always @(posedge CLK) begin
+    always @(posedge clk_core) begin
         tstb <= 1'b0;
         if (rst) begin bidx <= 0; gap <= 0; end
         else if (!running) begin
@@ -77,13 +97,13 @@ module top_meas #(
             else if (!tx_busy && !tstb) begin
                 tdata <= rbyte(bidx, cyc, nev, kept);
                 tstb  <= 1'b1;
-                if (bidx == 4'd13) begin bidx <= 0; gap <= 17'd120000; end  // pause between packets
+                if (bidx == 4'd13) begin bidx <= 0; gap <= 17'd120000; end
                 else bidx <= bidx + 1'b1;
             end
         end
     end
 
-    uart_tx #(.DIV(DIV)) u_tx (.clk(CLK), .rst(rst), .stb(tstb), .data(tdata),
+    uart_tx #(.DIV(DIV)) u_tx (.clk(clk_core), .rst(rst), .stb(tstb), .data(tdata),
                                .tx(TX), .busy(tx_busy));
 
     assign LEDR_N = running ? 1'b0 : 1'b1;   // LED on while measuring
