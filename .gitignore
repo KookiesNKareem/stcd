@@ -38,3 +38,4 @@ figures/*
 !figures/data/
 figures/data/*
 !figures/data/edncnn_real.json
+!figures/data/esr.json

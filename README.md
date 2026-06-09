@@ -59,6 +59,7 @@ python scripts/run_edncnn_efficiency.py  # -> figures/edncnn_efficiency.png
 
 # --- full pipeline (requires the datasets/weights from DATA.md) ---
 python scripts/run_edncnn_real.py        # 16-recording AUC -> figures/data/edncnn_real.json
+python scripts/run_esr.py                # standard label-free ESR -> figures/data/esr.json
 python scripts/run_event_picture.py      # -> figures/event_picture.png
 python scripts/run_before_after.py       # -> figures/before_after.png
 python scripts/run_stdp_demo.py          # -> figures/stdp_learning.png
