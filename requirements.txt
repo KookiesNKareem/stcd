@@ -10,6 +10,10 @@ scikit-image>=0.22   # SSIM for reconstruction eval
 
 # Data IO
 h5py>=3.10
+aedat>=2.2            # reads E-MLB .aedat4 recordings (scripts/run_emlb.py)
+
+# Optional (download the gated Google-Drive datasets)
+# gdown>=5.0
 
 # Optional (downstream reconstruction LPIPS metric)
 # lpips>=0.1.4

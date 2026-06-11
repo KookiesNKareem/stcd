@@ -32,12 +32,17 @@ APS-motion proxy label; mean ± 95% CI) versus per-event compute:
 
 STCD vs pretrained EDnCNN: Δ = +0.016, paired *t*-test *p* = 0.39 (not significant).
 
-- **FPGA (iCE40 UP5K, post-PnR):** 535 logic cells (10%), 2 SPRAM, **0 BRAM, 0 DSP**,
-  ~24–26 MHz, ~9 cycles/event ⇒ ~2.9 Mev/s, ~10 mW (estimate).
+- **FPGA (iCE40 UP5K):** 535 logic cells (10%), 2 SPRAM, **0 BRAM, 0 DSP**, ~24–26 MHz
+  post-PnR. On the board (24 MHz PLL) we **measure** 9.0 cycles/event, 2.67 Mev/s, and
+  ~10 mW of event-processing power (active–idle board delta, ≈3.7 nJ/event).
 - **Unsupervised STDP:** grows the kernel from a blind centre-only start (AUC 0.927)
   to 0.989, matching the hand-tuned box and approaching the supervised filter (0.991).
 - **Downstream (real data):** FireNet reconstruction SSIM — STCD recovers the most
   (0.201 vs 0.139 noisy); N-Cars recognition 82.5% (noisy) → 88.3% (STCD), ≈ clean 87.5%.
+- **Standard E-MLB benchmark (label-free ESR, 1152 recordings):** STCD ranks **3rd of
+  12** denoisers (0.971), the **best training-free method**, statistically tied with
+  the learned EDnCNN (0.975) and behind only EventZoom; strongest in high noise (best
+  of all at the noisiest ND64). Run zero-shot at the same `k,τ,θ`.
 
 ## Install
 
@@ -56,10 +61,12 @@ them. The one expensive result (the 16-recording eval) is cached in
 # --- regenerate from the cached eval (no raw data needed) ---
 python scripts/run_pareto.py             # -> figures/pareto.png        (accuracy vs cost)
 python scripts/run_edncnn_efficiency.py  # -> figures/edncnn_efficiency.png
+python scripts/run_emlb_figure.py        # -> figures/emlb.png + LaTeX table (from emlb.json)
 
 # --- full pipeline (requires the datasets/weights from DATA.md) ---
 python scripts/run_edncnn_real.py        # 16-recording AUC -> figures/data/edncnn_real.json
-python scripts/run_esr.py                # standard label-free ESR -> figures/data/esr.json
+python scripts/run_esr.py                # label-free ESR on DVSNOISE20 -> figures/data/esr.json
+python scripts/run_emlb.py               # ESR on the standard E-MLB benchmark -> figures/data/emlb.json
 python scripts/run_event_picture.py      # -> figures/event_picture.png
 python scripts/run_before_after.py       # -> figures/before_after.png
 python scripts/run_stdp_demo.py          # -> figures/stdp_learning.png
@@ -110,10 +117,13 @@ attic/             # archived exploratory scripts/figures
 ## Honest scope
 
 - The accuracy comparison uses an **APS-motion proxy** label on DVSNOISE20; we could
-  not reproduce the field-standard EPM/RPMD metric without the authors' full MATLAB
-  pipeline, and have not yet evaluated on the larger E-MLB/LED benchmarks.
-- FPGA throughput and power are **post-PnR / datasheet estimates**, not on-board
-  measurements.
+  not reproduce the field-standard *labelled* EPM/RPMD metric without the authors'
+  full MATLAB pipeline. We do evaluate on the standard **E-MLB** benchmark (1152
+  recordings) with its label-free ESR metric — our ESR is Raw-validated to within
+  0.007 of E-MLB's published values; the higher-resolution LED benchmark is untested.
+- FPGA cycles/event, throughput, and ~10 mW processing power are **on-board
+  measurements** (24 MHz PLL); the power is a whole-board active–idle delta at the
+  5 V input, so it bounds the 1.2 V core power rather than isolating it.
 - The MLPF comparison runs the authors' published weights **as-is** (trained on
   DND21); its score reflects cross-dataset transfer, not its in-domain ceiling.
 
