@@ -85,15 +85,28 @@ peak — while the learned CNN is ~2,500× slower and cannot keep up.
 - `top.v` — characterisation harness (on-chip LFSR event generator + 1 LED) so the
   core can be placed/timed with only `clk` + 1 pin (events come from on-chip in
   deployment).
-- `tb_stcd.v` — Icarus Verilog self-checking testbench.
-- `icebreaker.pcf` — minimal pin constraints. `Makefile` — build/test flow.
+- `top_meas.v` + `uart_tx.v` + `read_uart.py` — on-board **throughput/latency**
+  harness: a 12→24 MHz PLL clocks the core, an LFSR streams 10⁶ events back-to-back,
+  and counters are reported over UART. Measures 9.0 cycles/event, 2.67 Mev/s.
+- `top_power.v` — on-board **power** harness: same PLL, a button gates idle↔active
+  with nothing else changing, so an inline USB meter's active−idle delta isolates
+  STCD's event-processing power (~10 mW, ≈3.7 nJ/event at 24 MHz).
+- `tb_stcd.v`, `tb_meas.v` — Icarus Verilog self-checking testbenches.
+- `icebreaker*.pcf` — pin constraints. `Makefile` — build/test/measure flow.
 
 ## Build / test / measure / program
 ```bash
 make test       # Icarus Verilog functional self-check (all cases pass)
 make            # yosys synth + nextpnr PnR (prints utilisation + fmax)
 make prog       # icepack + iceprog to a connected iCEBreaker
+
+# on-board throughput (UART):
+make meas-prog && python read_uart.py --clk 24e6   # -> 9.0 cyc/event, 2.67 Mev/s
+
+# on-board power (inline USB meter): flash, then read W in two states.
+# Button toggles idle<->active; nothing else changes, so active-idle delta = STCD power.
+make power-prog                                     # idle 0.495 W, active 0.505 W -> ~10 mW
 ```
-The RTL is functionally verified in simulation; the resource/fmax numbers are
-post-synthesis/PnR for the UP5K. On-board bring-up still needs an event source
-(e.g. the sensor pipeline or a UART/SPI feeder).
+The RTL is functionally verified in simulation; resource/fmax are post-PnR for the
+UP5K, while cycles/event, throughput, and processing power are measured on the board
+(the harnesses carry their own on-chip LFSR event source).

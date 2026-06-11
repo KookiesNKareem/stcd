@@ -27,7 +27,19 @@ top_meas.asc: top_meas.json $(MPCF)
 top_meas.bin: top_meas.asc
 	icepack $< $@
 
-.PHONY: all prog timing test clean meas meas-sim meas-prog
+# ---- on-board power measurement harness (idle vs active via button) --------
+PSRCS = top_power.v stcd_frontend.v
+PPCF  = icebreaker_power.pcf
+
+top_power.json: $(PSRCS)
+	yosys -p "read_verilog $(PSRCS); synth_ice40 -spram -top top_power -json $@"
+top_power.asc: top_power.json $(PPCF)
+	nextpnr-ice40 --up5k --package sg48 --json top_power.json --pcf $(PPCF) \
+		--freq 24 --seed 1 --asc $@      # seed 1 closes at 24.7 MHz (2,4,6,8 also pass)
+top_power.bin: top_power.asc
+	icepack $< $@
+
+.PHONY: all prog timing test clean meas meas-sim meas-prog power power-prog
 all: $(TOP).bin
 test:                                  # functional sim (Icarus Verilog)
 	iverilog -g2012 -o tb.vvp tb_stcd.v stcd_frontend.v && vvp tb.vvp; rm -f tb.vvp
@@ -42,5 +54,11 @@ meas: top_meas.bin                     # build the on-board measurement bitstrea
 meas-prog: top_meas.bin                # flash it, then run:  python read_uart.py
 	iceprog $<
 
+power: top_power.bin                   # build the power-measurement bitstream
+power-prog: top_power.bin              # flash it, then toggle the button and read the USB meter
+	iceprog $<
+
 clean:
-	rm -f $(TOP).json $(TOP).asc $(TOP).bin $(TOP).rpt top_meas.json top_meas.asc top_meas.bin *.log
+	rm -f $(TOP).json $(TOP).asc $(TOP).bin $(TOP).rpt \
+	      top_meas.json top_meas.asc top_meas.bin \
+	      top_power.json top_power.asc top_power.bin *.log
