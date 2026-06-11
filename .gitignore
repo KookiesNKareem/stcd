@@ -35,6 +35,7 @@ figures/*
 !figures/pareto.png
 !figures/stdp_learning.png
 !figures/emlb.png
+!figures/graphical_abstract.png
 !figures/edncnn_real.json
 !figures/data/
 figures/data/*

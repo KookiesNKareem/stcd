@@ -62,6 +62,7 @@ them. The one expensive result (the 16-recording eval) is cached in
 python scripts/run_pareto.py             # -> figures/pareto.png        (accuracy vs cost)
 python scripts/run_edncnn_efficiency.py  # -> figures/edncnn_efficiency.png
 python scripts/run_emlb_figure.py        # -> figures/emlb.png + LaTeX table (from emlb.json)
+python scripts/make_graphical_abstract.py # -> figures/graphical_abstract.png (IEEE submission asset)
 
 # --- full pipeline (requires the datasets/weights from DATA.md) ---
 python scripts/run_edncnn_real.py        # 16-recording AUC -> figures/data/edncnn_real.json
