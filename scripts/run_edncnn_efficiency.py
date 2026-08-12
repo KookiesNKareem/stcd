@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from stcd.energy import front_end_ops_per_event, Hardware   # noqa: E402
 from stcd.downstream.edncnn_real import real_macs_per_event  # noqa: E402
-from stcd.plotstyle import apply_style, color               # noqa: E402
+from stcd.plotstyle import apply_style, color, save         # noqa: E402
 
 FIG = os.path.join(os.path.dirname(__file__), "..", "figures")
 
@@ -80,12 +80,13 @@ def main() -> None:
 
     def ratio_arrow(ax, lo, hi, txt):
         """Double-headed arrow between the two bar tops; on a log axis its span IS
-        the ratio. Drawn in the gap (x=0.5) between bars, labelled at the midpoint."""
-        ax.annotate("", xy=(0.5, hi * 0.96), xytext=(0.5, lo * 1.04),
-                    arrowprops=dict(arrowstyle="<->", color="#222", lw=2.2))
+        the ratio. Drawn in the gap (x=0.5) between bars, labelled in a clean pill
+        at the midpoint."""
+        ax.annotate("", xy=(0.5, hi * 0.94), xytext=(0.5, lo * 1.06),
+                    arrowprops=dict(arrowstyle="<->", color="#333", lw=1.8))
         ax.text(0.5, (lo * hi) ** 0.5, txt, ha="center", va="center",
-                fontsize=13, fontweight="bold", color="#222",
-                path_effects=[pe.withStroke(linewidth=4, foreground="white")])
+                fontsize=12.5, fontweight="bold", color="#1a1a1a",
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#cbd5e0", lw=0.8))
 
     a = axes[0]
     bars = a.bar(names, [acc["STCD (ours)"], acc["EDnCNN (real)"]],
@@ -110,7 +111,7 @@ def main() -> None:
     fig.text(0.5, -0.02, "Real DVSNOISE20 · SNN @20 pJ/SynOp vs CNN @1 pJ/MAC",
              ha="center", fontsize=8.5, color="#666")
     fig.tight_layout()
-    fig.savefig(os.path.join(FIG, "edncnn_efficiency.png"), dpi=150, bbox_inches="tight")
+    save(fig, os.path.join(FIG, "edncnn_efficiency"))
     plt.close(fig)
 
     with open(os.path.join(FIG, "edncnn_efficiency.json"), "w") as f:

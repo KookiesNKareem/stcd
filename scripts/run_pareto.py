@@ -22,7 +22,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from stcd.plotstyle import apply_style, color  # noqa: E402
+from stcd.plotstyle import apply_style, color, save  # noqa: E402
 
 FIG = os.path.join(os.path.dirname(__file__), "..", "figures")
 DATA = os.path.join(FIG, "data")
@@ -49,17 +49,30 @@ def main() -> None:
     for name, (fl, au, _) in pts.items():
         print(f"  {name:14s} FLOPs/ev={fl:>10}  AUC={au:.3f}")
 
-    fig, ax = plt.subplots(figsize=(8.5, 5.4))
+    # Per-point label placement (dx pt, dy pt, ha) to avoid overlap/clipping.
+    LABELS = {
+        "STCD": (0, 14, "center"), "EDnCNN": (-11, 9, "right"),
+        "MLPF": (0, 13, "center"), "time-surface": (11, 7, "left"),
+        "BAF": (11, -5, "left"), "KNoise": (11, 6, "left"),
+    }
+    fig, ax = plt.subplots(figsize=(9.0, 3.7))
     for name, (fl, au, c) in pts.items():
-        ax.scatter(fl, au, s=130, color=c, edgecolor="k", linewidth=0.8, zorder=3)
-        ax.annotate(name, (fl, au), textcoords="offset points", xytext=(8, 8), fontsize=8.5)
+        ours = name == "STCD"
+        if ours:  # soft halo draws the eye to our method
+            ax.scatter(fl, au, s=560, facecolor="none", edgecolor=c,
+                       linewidth=1.4, alpha=0.40, zorder=3)
+        ax.scatter(fl, au, s=210 if ours else 120, color=c,
+                   edgecolor="k", linewidth=1.0, zorder=4 if ours else 3)
+        dx, dy, ha = LABELS.get(name, (8, 8, "left"))
+        ax.annotate(name, (fl, au),
+                    textcoords="offset points", xytext=(dx, dy), ha=ha,
+                    fontsize=10.5, fontweight="bold" if ours else "normal")
     ax.set_xscale("log")
+    ax.set_xlim(5, 1.2e9)
+    ax.set_ylim(0.48, 0.84)
     ax.set_xlabel("FLOPs per event  (compute cost →)")
-    ax.set_ylabel("real-data denoising AUC")
-    ax.set_title("Accuracy vs compute cost (real DVSNOISE20)")
-    ax.set_ylim(0.5, 0.88)
-    fig.tight_layout()
-    fig.savefig(os.path.join(FIG, "pareto.png"), dpi=150, bbox_inches="tight")
+    ax.set_ylabel("real-data denoising ROC-AUC")
+    save(fig, os.path.join(FIG, "pareto"))
     plt.close(fig)
 
     with open(os.path.join(FIG, "pareto.json"), "w") as f:

@@ -1,0 +1,31 @@
+{
+  "records": [
+    {
+      "_file": "driving",
+      "noise_kind": "real",
+      "noise_hz": 5.4198792093505785,
+      "n_signal": 1456141,
+      "n_noise": 975112,
+      "STCD": 0.9076642625637822,
+      "time-surface": 0.8815549085981055,
+      "BAF": 0.833867802659604,
+      "KNoise": 0.5247565543011544,
+      "MLPF": 0.8960286915608286
+    },
+    {
+      "_file": "hotel-bar",
+      "noise_kind": "real",
+      "noise_hz": 5.419893641057175,
+      "n_signal": 221908,
+      "n_noise": 975138,
+      "STCD": 0.9002127116780003,
+      "time-surface": 0.9274746719715583,
+      "BAF": 0.8748368042616539,
+      "KNoise": 0.5315341060489567,
+      "MLPF": 0.9555158071303351
+    }
+  ],
+  "win_s": 2.0,
+  "seed": 0,
+  "config": "k=3, tau=8ms, theta=1.5 (paper-fixed, zero-shot)"
+}

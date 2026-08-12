@@ -8,10 +8,12 @@ co-active — real edges fire neighbouring pixels in quick succession, backgroun
 operations per event, uses no multipliers**, and exposes three interpretable
 parameters (`k, τ, θ`).
 
-On all 16 real DVSNOISE20 recordings, STCD is **statistically tied with the
-authors' pretrained EDnCNN** at **~2.2×10⁷ fewer FLOPs/event**, beats the classical
-filters and the deployable learned MLPF, synthesizes to a **$50 FPGA** (10% logic,
-zero DSPs), and its spatial kernel can be learned **without labels** by STDP.
+On all 16 real DVSNOISE20 recordings, STCD is **statistically equivalent to the
+authors' pretrained EDnCNN (TOST, within a 0.05-AUC margin)** at **~2.2×10⁷ fewer
+FLOPs/event**, beats the classical filters and the deployable learned MLPF,
+synthesizes to a **$50 FPGA** (10% logic, zero DSPs), and its spatial kernel can be
+learned **without labels** by STDP. On the standard label-free **E-MLB** benchmark
+(1152 recordings) it ranks **3rd of 12**, the best training-free method.
 
 > The thesis is *parity at a tiny fraction of the cost* — STCD does **not** beat the
 > learned CNN on accuracy; it matches it on the cheapest hardware on the frontier.
@@ -30,19 +32,34 @@ APS-motion proxy label; mean ± 95% CI) versus per-event compute:
 | BAF | classical | 0.693 ± 0.031 | 16 |
 | KNoise | memory-light | 0.516 ± 0.018 | 8 |
 
-STCD vs pretrained EDnCNN: Δ = +0.016, paired *t*-test *p* = 0.39 (not significant).
+STCD vs pretrained EDnCNN: Δ = +0.016; the difference is **statistically equivalent**
+by TOST within a 0.05-AUC margin (*p* = 0.04, 90% CI [−0.016, +0.048]) — i.e. not a
+meaningful accuracy gap in either direction.
 
-- **FPGA (iCE40 UP5K):** 535 logic cells (10%), 2 SPRAM, **0 BRAM, 0 DSP**, ~24–26 MHz
-  post-PnR. On the board (24 MHz PLL) we **measure** 9.0 cycles/event, 2.67 Mev/s, and
-  ~10 mW of event-processing power (active–idle board delta, ≈3.7 nJ/event).
+- **FPGA (iCE40 UP5K):** the **full DAVIS346 (346×260)** sensor fits with state packed
+  to 8 bits/pixel — 823 logic cells (15%), **4 SPRAM, 0 BRAM, 0 DSP**, ~24–26 MHz
+  post-PnR. On the board (24 MHz PLL) the packed core **measures** 9.0 cycles/event,
+  2.67 Mev/s, and ~10 mW of event-processing power (9–10 mW active–idle board delta,
+  0.616–0.617 W active vs 0.607 W idle; ≈3.4–3.7 nJ/event), matching the same-datapath
+  128×128 core (0.505 vs 0.495 W). A minimal 128×128, 16-bit demonstrator core is
+  535 LC / 2 SPRAM for reference.
 - **Unsupervised STDP:** grows the kernel from a blind centre-only start (AUC 0.927)
   to 0.989, matching the hand-tuned box and approaching the supervised filter (0.991).
 - **Downstream (real data):** FireNet reconstruction SSIM — STCD recovers the most
-  (0.201 vs 0.139 noisy); N-Cars recognition 82.5% (noisy) → 88.3% (STCD), ≈ clean 87.5%.
+  (0.201 vs 0.139 noisy); N-Cars recognition 82.5% (noisy) → 87.5% (STCD), restoring the
+  clean baseline (87.5%) in this protocol (120 test clips).
+- **Zero-shot cross-dataset (DND21, MLPF/SNNF's home dataset):** exact-label noise
+  mixing (synthetic 1-5 Hz/px + DND21's recorded noise, incl. MLPF's training-noise
+  file); MLPF calibration reproduces its published in-domain level. On the dynamic
+  *driving* sequence STCD (zero-shot) beats in-domain MLPF at every noise level
+  (0.941 vs 0.899 at 1 Hz; 0.908 vs 0.896 at real 5.4 Hz dark noise), above SNNF's
+  reported 0.89; in-domain MLPF wins on static *hotel-bar* at high noise
+  (`scripts/run_dnd21.py`, `figures/data/dnd21_*.json`).
 - **Standard E-MLB benchmark (label-free ESR, 1152 recordings):** STCD ranks **3rd of
-  12** denoisers (0.971), the **best training-free method**, statistically tied with
-  the learned EDnCNN (0.975) and behind only EventZoom; strongest in high noise (best
-  of all at the noisiest ND64). Run zero-shot at the same `k,τ,θ`.
+  12** denoisers (0.971), the **best training-free method**, within 0.004 ESR of the
+  learned EDnCNN (0.975) and behind only EventZoom; it is the **single best of all 12**
+  in high noise (night set 1.063; noisiest night ND64 1.231 vs EDnCNN 1.086, EventZoom
+  0.988). Run zero-shot at the same `k,τ,θ`.
 
 ## Install
 
@@ -75,8 +92,15 @@ python scripts/run_downstream_real.py    # FireNet SSIM -> figures/downstream_re
 python scripts/run_ncars_recognition.py  # N-Cars recognition under noise
 
 # --- FPGA (open toolchain: yosys, nextpnr-ice40, icepack, iverilog) ---
-cd hw && make test     # Icarus Verilog self-checking testbench
-        make           # synth + place-and-route (resource report)
+# 128x128 demonstrator core (16-bit state):
+cd hw && make test          # Icarus Verilog self-checking testbench
+        make                # synth + place-and-route (resource report)
+        make meas-prog      # flash throughput harness, then: python read_uart.py
+# Full-resolution DAVIS346 packed core (8-bit state, the headline result):
+        make packed-test    # co-sim the packed RTL vs the fixed-point reference
+        make packed         # synth + place-and-route (4 SPRAM, ~26 MHz)
+        make packed-meas-prog   # flash full-res measurement bitstream, then: python read_uart.py
+        make packed-power-prog  # flash full-res power bitstream; button toggles idle/active, read USB meter
 
 # --- paper ---
 cd paper && tectonic main.tex     # -> main.pdf
@@ -121,9 +145,10 @@ attic/             # archived exploratory scripts/figures
   not reproduce the field-standard *labelled* EPM/RPMD metric without the authors'
   full MATLAB pipeline. We do evaluate on the standard **E-MLB** benchmark (1152
   recordings) with its label-free ESR metric — our ESR is Raw-validated to within
-  0.007 of E-MLB's published values; the higher-resolution LED benchmark is untested.
-- FPGA cycles/event, throughput, and ~10 mW processing power are **on-board
-  measurements** (24 MHz PLL); the power is a whole-board active–idle delta at the
+  0.008 of E-MLB's published values; the higher-resolution LED benchmark is untested.
+- FPGA cycles/event, throughput, and the ~10 mW power are all **on-board measurements**
+  of the full-resolution packed core (24 MHz PLL; power also corroborated on the
+  same-datapath 128×128 core). The power is a whole-board active–idle delta at the
   5 V input, so it bounds the 1.2 V core power rather than isolating it.
 - The MLPF comparison runs the authors' published weights **as-is** (trained on
   DND21); its score reflects cross-dataset transfer, not its in-domain ceiling.

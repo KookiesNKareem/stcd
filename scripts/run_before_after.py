@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from stcd.events import Events                             # noqa: E402
 from stcd.frontend import SpikingFrontEnd, FrontEndConfig  # noqa: E402
 from stcd.synth import inject_noise                        # noqa: E402
-from stcd.plotstyle import apply_style, OURS, color        # noqa: E402
+from stcd.plotstyle import apply_style, OURS, color, save  # noqa: E402
 
 FIG = os.path.join(os.path.dirname(__file__), "..", "figures")
 MAT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "dvsnoise20", "2_mat")
@@ -127,7 +127,7 @@ def main() -> None:
         ax.imshow(shp(im), cmap="magma", vmin=0, vmax=1, interpolation="nearest")
         ax.set_title(title); ax.set_xticks([]); ax.set_yticks([])
         ax.text(0.5, -0.07, sub, transform=ax.transAxes, ha="center", va="top",
-                fontsize=9.5, color="#2d3748")
+                fontsize=11, color="#2d3748")
         for s in ax.spines.values():
             s.set_visible(True); s.set_color(edge); s.set_linewidth(2.2)
 
@@ -147,12 +147,10 @@ def main() -> None:
     leg.set_zorder(10)
     axes[1, 1].annotate("scatter removed · streaks kept",
                         xy=(0.5, 1.04), xycoords="axes fraction", ha="center",
-                        fontsize=8.5, color="#2d3748")
+                        fontsize=10, color="#2d3748")
 
-    fig.suptitle(f"Real-data event denoising — {scene} (DAVIS346): spatial (top) + space-time (bottom)", y=1.0)
     fig.tight_layout()
-    out = os.path.join(FIG, "before_after.png")
-    fig.savefig(out, dpi=140, bbox_inches="tight")
+    out = save(fig, os.path.join(FIG, "before_after"), formats=("png",))[0]
     plt.close(fig)
 
     with open(os.path.join(FIG, "before_after.json"), "w") as f:

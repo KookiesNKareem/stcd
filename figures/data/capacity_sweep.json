@@ -1,0 +1,11 @@
+{
+  "capacity_sweep_mean_auc": {
+    "k3": 0.797,
+    "k5": 0.791,
+    "k7": 0.78,
+    "2-scale": 0.794,
+    "EDnCNN": 0.781
+  },
+  "n_recordings": 16,
+  "note": "per-event AUC on DVSNOISE20 (proxy); larger/multi-scale do not beat k3"
+}

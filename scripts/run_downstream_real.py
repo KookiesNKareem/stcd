@@ -32,7 +32,7 @@ from stcd.downstream.firenet import load_firenet, firenet_available  # noqa: E40
 from stcd.downstream import reconstruction as RC                 # noqa: E402
 from stcd.downstream.edncnn_real import load_real_edncnn, predict_stream  # noqa: E402
 from stcd.downstream import mlpf as MLPF                         # noqa: E402
-from stcd.plotstyle import apply_style, color, OURS              # noqa: E402
+from stcd.plotstyle import apply_style, color, OURS, save        # noqa: E402
 
 DATA = os.path.join(os.path.dirname(__file__), "..", "data", "dvsnoise20")
 EDN_MODEL = os.path.join(os.path.dirname(__file__), "..", "data", "edncnn", "allData_v8_preTrained.mat")
@@ -56,9 +56,45 @@ def ssim_mean(recon, ref):
     return float(np.mean([ssim(g, robust(r), data_range=1.0) for r, g in zip(recon, ref)]))
 
 
+def make_figure(ssim, kf, noise_hz):
+    """Render the SSIM-bars figure from a dict of {method: SSIM}. Used both by the
+    full compute path and the fast replot-from-cache path."""
+    denoisers = sorted([k for k in ssim if k not in ("clean (real)", "noisy")],
+                       key=lambda k: -ssim[k])
+    order = (["clean (real)"] if "clean (real)" in ssim else []) + denoisers \
+        + (["noisy"] if "noisy" in ssim else [])
+    cols = {"clean (real)": "#5f6b78", OURS: color("STCD"), "EDnCNN": color("EDnCNN"),
+            "MLPF": color("MLPF"), "time-surface": color("time-surface"), "BAF": color("BAF"),
+            "noisy": color("EDnCNN")}
+    fig, ax = plt.subplots(figsize=(7.6, 4.6))
+    bars = ax.bar(order, [ssim[k] for k in order],
+                  color=[cols.get(k, "#5f6b78") for k in order], zorder=3)
+    ax.bar_label(bars, fmt="%.3f", padding=3, fontsize=10)
+    ax.axhline(ssim["clean (real)"], ls="--", color="#5f6b78", alpha=0.6)
+    ax.set_ylabel("FireNet reconstruction SSIM vs real APS")
+    ax.set_ylim(0, max(ssim.values()) * 1.34)   # headroom so the inset clears the dashed line
+    ax.text(0.985, 0.985,
+            f"all methods remove the same {(1-kf)*100:.0f}% of events;\nonly which events differ",
+            transform=ax.transAxes, ha="right", va="top", fontsize=8.5, color="#3a4655",
+            bbox=dict(boxstyle="round,pad=0.4", fc="#f5f8fb", ec="#cbd5e0"))
+    plt.setp(ax.get_xticklabels(), rotation=12, ha="right")
+    fig.tight_layout()
+    save(fig, os.path.join(FIG, "downstream_real"))
+    plt.close(fig)
+
+
 def main() -> None:
     os.makedirs(FIG, exist_ok=True)
     apply_style()
+    # Fast path: replot the styled figure from the cached numbers (avoids the
+    # ~hour-long per-event EDnCNN scoring). Set DS_RECOMPUTE=1 to force recompute.
+    cache = os.path.join(FIG, "downstream_real.json")
+    if os.environ.get("DS_RECOMPUTE") != "1" and os.path.isfile(cache):
+        d = json.load(open(cache))
+        print(f"replot from cache {cache}: {d['ssim']}")
+        make_figure(d["ssim"], d["matched_keep_frac"], d["injected_noise_hz"])
+        print(f"wrote {os.path.abspath(os.path.join(FIG, 'downstream_real.pdf'))}")
+        return
     ev_path = os.path.join(DATA, "2_mat", f"{REC}.mat")
     if not (os.path.isfile(ev_path) and firenet_available()):
         print("recording or FireNet missing; skip"); return
@@ -100,30 +136,12 @@ def main() -> None:
         print(f"  reconstruction SSIM | {k:14s} = {s:.3f}")
 
     # ---- figure: SSIM bars ------------------------------------------------- #
-    denoisers = sorted([k for k in ssim if k not in ("clean (real)", "noisy")], key=lambda k: -ssim[k])
-    order = (["clean (real)"] if "clean (real)" in ssim else []) + denoisers \
-        + (["noisy"] if "noisy" in ssim else [])
-    cols = {"clean (real)": "#718096", OURS: color("STCD"), "EDnCNN": color("EDnCNN"),
-            "MLPF": color("MLPF"), "time-surface": color("time-surface"), "BAF": color("BAF"),
-            "noisy": "#e53e3e"}
-    fig, ax = plt.subplots(figsize=(8.2, 5.0))
-    bars = ax.bar(order, [ssim[k] for k in order], color=[cols[k] for k in order], zorder=3)
-    ax.bar_label(bars, fmt="%.3f", padding=3, fontsize=10)
-    ax.axhline(ssim["clean (real)"], ls="--", color="#718096", alpha=0.6)
-    ax.set_ylabel("FireNet reconstruction SSIM vs real APS")
-    ax.set_title(f"Downstream reconstruction on real data (+{NOISE_HZ:.0f} Hz/px noise)")
-    ax.text(0.5, 0.04, f"all methods remove the same {(1-kf)*100:.0f}% of events; only which events differ",
-            transform=ax.transAxes, ha="center", fontsize=8.5, color="#4a5568",
-            bbox=dict(boxstyle="round", fc="#f7fafc", ec="#cbd5e0"))
-    plt.setp(ax.get_xticklabels(), rotation=12, ha="right")
-    fig.tight_layout()
-    fig.savefig(os.path.join(FIG, "downstream_real.png"), dpi=140, bbox_inches="tight")
-    plt.close(fig)
+    make_figure(ssim, kf, NOISE_HZ)
 
     with open(os.path.join(FIG, "downstream_real.json"), "w") as f:
         json.dump({"recording": REC, "injected_noise_hz": NOISE_HZ, "matched_keep_frac": kf,
                    "ssim": ssim}, f, indent=2)
-    print(f"\nwrote {os.path.abspath(os.path.join(FIG, 'downstream_real.png'))}")
+    print(f"\nwrote {os.path.abspath(os.path.join(FIG, 'downstream_real.pdf'))}")
 
 
 if __name__ == "__main__":

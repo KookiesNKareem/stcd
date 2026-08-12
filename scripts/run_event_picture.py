@@ -14,6 +14,7 @@ import numpy as np  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from stcd.datasets import dvsnoise20 as dv  # noqa: E402
+from stcd.plotstyle import apply_style, save  # noqa: E402
 
 MAT = os.path.join(os.path.dirname(__file__), "..", "data", "dvsnoise20", "2_mat")
 FIG = os.path.join(os.path.dirname(__file__), "..", "figures")
@@ -23,6 +24,7 @@ WIN = float(os.environ.get("EVPIC_WIN", "0.1"))   # seconds
 
 def main():
     os.makedirs(FIG, exist_ok=True)
+    apply_style()
     paths = sorted(glob.glob(os.path.join(MAT, f"{SCENE}*.mat"))) or sorted(glob.glob(os.path.join(MAT, "*.mat")))
     ev, _, _, _ = dv.load_full(paths[0])
     t0 = ev.ts.min(); best, bn = t0, -1                 # most-active WIN window
@@ -44,10 +46,9 @@ def main():
     ax.scatter([], [], s=22, c="#4aa3ff", label="darker (OFF)")
     ax.legend(loc="upper right", fontsize=9, frameon=True, facecolor="white",
               edgecolor="none", framealpha=0.9, labelcolor="#1a202c")
-    ax.set_title("Real DAVIS346 event stream", fontsize=12.5, color="#1a202c")
     fig.tight_layout()
-    out = os.path.join(FIG, "event_picture.png")
-    fig.savefig(out, dpi=150, bbox_inches="tight"); plt.close(fig)
+    out = save(fig, os.path.join(FIG, "event_picture"), formats=("png",))[0]
+    plt.close(fig)
     print("wrote", os.path.abspath(out))
 
 

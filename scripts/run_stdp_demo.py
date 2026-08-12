@@ -33,14 +33,72 @@ from stcd.synth import SynthConfig, generate                 # noqa: E402
 from stcd.stdp import STDPDenoiser, STDPConfig                # noqa: E402
 from stcd.frontend import SpikingFrontEnd, FrontEndConfig     # noqa: E402
 from stcd.train import train_frontend, TrainConfig           # noqa: E402
-from stcd.plotstyle import apply_style, color, OURS           # noqa: E402
+from stcd.plotstyle import apply_style, color, OURS, save     # noqa: E402
 
 FIG = os.path.join(os.path.dirname(__file__), "..", "figures")
+
+
+def make_figure(d):
+    """Render the learning curve + receptive-field panels from a data dict
+    (used by both the compute path and the replot-from-cache path)."""
+    cblue, cbox, csup, cred = color("STCD"), color("BAF"), "#6b46c1", "#e53e3e"
+    fig = plt.figure(figsize=(12, 4.4))
+    gs = fig.add_gridspec(1, 3, width_ratios=[2.3, 1, 1], wspace=0.30)
+
+    ax = fig.add_subplot(gs[0, 0])
+    ax.plot(d["curve_x"], d["curve_auc"], "-o", ms=3.5, color=cblue,
+            label=f"{OURS} via STDP (no labels)")
+    ax.scatter([0], [d["auc_blind"]], color=cred, zorder=6, s=55, ec="white", lw=1.0)
+    ax.annotate("blind\n(centre-only)", (0, d["auc_blind"]), textcoords="offset points",
+                xytext=(12, 2), fontsize=8.5, color=cred, va="center")
+    ax.axhline(d["auc_sup"], ls="-.", color=csup, lw=1.6,
+               label=f"supervised, w/ labels: {d['auc_sup']:.3f}")
+    ax.axhline(d["auc_box"], ls="--", color=cbox, lw=1.6,
+               label=f"hand-tuned box: {d['auc_box']:.3f}")
+    ax.set_xlabel("STDP epoch"); ax.set_ylabel("held-out denoising AUC")
+    ax.set_ylim(min(0.90, d["auc_blind"] - 0.02), 1.005)
+    ax.set_title("Held-out AUC vs epoch")
+    ax.legend(loc="lower right", fontsize=8.2)
+
+    # Receptive-field evolution on a SHARED colour scale (both panels, one
+    # colourbar) so the redistribution of weight is visible. Both kernels are
+    # sum-conserved (total weight = 1): the blind init concentrates ~1.0 in the
+    # centre cell, while STDP spreads it to ~1/k^2 (~0.04) per cell. That ~25x
+    # concentration ratio makes the distributed field invisible on a *linear*
+    # shared scale, so we use a gamma (power-law) colour mapping: same shared
+    # range, honest weight values on the colourbar, but the uniform learned field
+    # now renders at a clearly visible ~0.35 while the blind peak still reads 1.
+    from matplotlib.colors import PowerNorm
+    blind = np.asarray(d["blind_kernel"]); learned = np.asarray(d["learned_kernel"])
+    vpk = float(blind[1].max())
+    norm = PowerNorm(gamma=0.33, vmin=0.0, vmax=vpk)
+    snaps = [(blind, "epoch 0 · blind init"),
+             (learned, f"epoch {d['n_kernel_epochs']} · learned field")]
+    axks, im = [], None
+    for col, (kern, lab) in enumerate(snaps):
+        axk = fig.add_subplot(gs[0, 1 + col])
+        im = axk.imshow(kern[1], cmap="viridis", norm=norm)
+        axk.set_title(lab, fontsize=9.5); axk.set_xticks([]); axk.set_yticks([])
+        axks.append(axk)
+    cb = fig.colorbar(im, ax=axks, fraction=0.046, pad=0.04)
+    cb.set_label("synaptic weight (sum$=$1)", fontsize=8.5)
+    save(fig, os.path.join(FIG, "stdp_learning"))
+    plt.close(fig)
 
 
 def main() -> None:
     os.makedirs(FIG, exist_ok=True)
     apply_style()
+    # Fast path: replot from cached numbers + kernels (avoids the multi-minute
+    # STDP/supervised recompute). Set STDP_RECOMPUTE=1 to force a fresh run.
+    cache = os.path.join(FIG, "stdp.json")
+    if os.environ.get("STDP_RECOMPUTE") != "1" and os.path.isfile(cache):
+        d = json.load(open(cache))
+        if "blind_kernel" in d and "curve_x" in d:
+            print(f"replot from cache {cache} (STDP_RECOMPUTE=1 to recompute)")
+            make_figure(d)
+            print(f"\nFigures written to {os.path.abspath(FIG)}")
+            return
     cfg = dict(H=140, W=180, duration=0.3, scene="bars", num_objects=4,
                noise_rate_hz=1.0, n_hot_pixels=60, hot_pixel_rate_hz=500.0)
     train_ev = generate(SynthConfig(seed=1, **cfg))      # UNLABELLED for STDP
@@ -70,42 +128,23 @@ def main() -> None:
     print(f"hand-tuned spatial box : AUC={auc_box:.3f}")
     print(f"supervised (labels)    : AUC={auc_sup:.3f}")
 
-    # --- figure --------------------------------------------------------------
-    cblue, cbox, csup, cred = color("STCD"), color("BAF"), "#6b46c1", "#e53e3e"
-    fig = plt.figure(figsize=(12, 4.4))
-    gs = fig.add_gridspec(1, 3, width_ratios=[2.3, 1, 1], wspace=0.30)
-
-    ax = fig.add_subplot(gs[0, 0])
-    ax.plot(curve_x, curve_auc, "-o", ms=3.5, color=cblue,
-            label=f"{OURS} via STDP (no labels)")
-    ax.scatter([0], [auc_blind], color=cred, zorder=6, s=55, ec="white", lw=1.0)
-    ax.annotate("blind\n(centre-only)", (0, auc_blind), textcoords="offset points",
-                xytext=(12, 2), fontsize=8.5, color=cred, va="center")
-    ax.axhline(auc_sup, ls="-.", color=csup, lw=1.6, label=f"supervised, w/ labels: {auc_sup:.3f}")
-    ax.axhline(auc_box, ls="--", color=cbox, lw=1.6, label=f"hand-tuned box: {auc_box:.3f}")
-    ax.set_xlabel("STDP epoch"); ax.set_ylabel("held-out denoising AUC")
-    ax.set_ylim(min(0.90, auc_blind - 0.02), 1.005)
-    ax.set_title("Held-out AUC vs epoch")
-    ax.legend(loc="lower right", fontsize=8.2)
-
-    # receptive-field evolution (ON channel). Each panel auto-scales to its own
-    # weight range so the learned field's *structure* is visible: the blind init
-    # is a single centre point; STDP grows a distributed spatial receptive field.
-    snaps = [(blind_kernel, "epoch 0 · blind init"),
-             (hist["kernel"][-1], f"epoch {len(hist['kernel'])} · learned field")]
-    for col, (kern, lab) in enumerate(snaps):
-        axk = fig.add_subplot(gs[0, 1 + col])
-        im = axk.imshow(kern[1], cmap="viridis")          # per-kernel auto-scale
-        axk.set_title(lab, fontsize=9.5); axk.set_xticks([]); axk.set_yticks([])
-        fig.colorbar(im, ax=axk, fraction=0.046, pad=0.04)
-    fig.suptitle(f"Unsupervised STDP learning of the {OURS} spatial kernel (no labels)", y=1.0)
-    fig.savefig(os.path.join(FIG, "stdp_learning.png"), dpi=140, bbox_inches="tight")
-    plt.close(fig)
-
+    # --- assemble data + cache (kernels included so re-styling never recomputes) ---
+    d = {
+        "curve_x": [int(x) for x in curve_x],
+        "curve_auc": [float(a) for a in curve_auc],
+        "auc_blind": float(auc_blind), "auc_stdp": float(auc_stdp),
+        "auc_box": float(auc_box), "auc_sup": float(auc_sup),
+        "blind_kernel": np.asarray(blind_kernel).tolist(),
+        "learned_kernel": np.asarray(hist["kernel"][-1]).tolist(),
+        "n_kernel_epochs": len(hist["kernel"]),
+        # back-compat fields
+        "auc": {"blind_center_only": float(auc_blind), "stdp_unsupervised": float(auc_stdp),
+                "hand_tuned_box": float(auc_box), "supervised": float(auc_sup)},
+        "auc_curve": [float(a) for a in hist["auc"]], "n_events": int(len(eval_ev)),
+    }
     with open(os.path.join(FIG, "stdp.json"), "w") as f:
-        json.dump({"auc": {"blind_center_only": auc_blind, "stdp_unsupervised": auc_stdp,
-                           "hand_tuned_box": auc_box, "supervised": auc_sup},
-                   "auc_curve": hist["auc"], "n_events": len(eval_ev)}, f, indent=2)
+        json.dump(d, f, indent=2)
+    make_figure(d)
     print(f"\nFigures written to {os.path.abspath(FIG)}")
 
 

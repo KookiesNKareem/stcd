@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt   # noqa: E402
 import numpy as np                # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from stcd.plotstyle import apply_style, color, OURS   # noqa: E402
+from stcd.plotstyle import apply_style, color, OURS, FAMILY_COLORS, save   # noqa: E402
 
 HERE = os.path.dirname(__file__)
 JSON = os.path.join(HERE, "..", "figures", "data", "emlb.json")
@@ -73,19 +73,17 @@ def main() -> None:
     n_methods = len([m for m in rows if m != "Raw"])
 
     # --- figure: sorted overall ESR, STCD highlighted -------------------------
-    fig, ax = plt.subplots(figsize=(8.0, 5.4))
-    kcol = {"ours": color(OURS), "learned": "#8B5CF6", "classical": "#94A3B8", "raw": "#CBD5E1"}
+    fig, ax = plt.subplots(figsize=(7.4, 5.0))
+    kcol = FAMILY_COLORS
     y = np.arange(len(order))[::-1]
     cols = [kcol[rows[m][1]] for m in order]
-    ax.barh(y, [overall[m] for m in order], color=cols, zorder=3,
-            xerr=[stcd_ci if m == "STCD" else 0 for m in order], capsize=3)
+    ax.barh(y, [overall[m] for m in order], color=cols, zorder=3)
     for yi, m in zip(y, order):
-        ax.text(overall[m] + 0.004, yi, f"{overall[m]:.3f}", va="center", fontsize=8.5)
+        ax.text(overall[m] + 0.005, yi, f"{overall[m]:.3f}", va="center", fontsize=9)
     ax.set_yticks(y); ax.set_yticklabels(
         [(m + "  (ours)" if m == "STCD" else m) for m in order])
     ax.set_xlabel("mean ESR over E-MLB (V1, n=1152) ↑")
     ax.set_xlim(0.75, max(overall.values()) + 0.05)
-    ax.set_title("STCD on the E-MLB benchmark (standard label-free metric)")
     from matplotlib.patches import Patch
     ax.legend(handles=[Patch(color=kcol["ours"], label="STCD (ours, training-free)"),
                        Patch(color=kcol["learned"], label="learned (trained net)"),
@@ -93,7 +91,7 @@ def main() -> None:
                        Patch(color=kcol["raw"], label="raw (no denoising)")],
               loc="lower right", fontsize=8, framealpha=0.9)
     fig.tight_layout()
-    fig.savefig(FIG, dpi=140, bbox_inches="tight")
+    save(fig, os.path.splitext(FIG)[0])
     plt.close(fig)
 
     # --- console summary + LaTeX table ---------------------------------------

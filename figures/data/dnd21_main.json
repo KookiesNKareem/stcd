@@ -1,0 +1,103 @@
+{
+  "records": [
+    {
+      "_file": "driving",
+      "noise_kind": "synthetic",
+      "noise_hz": 1.0,
+      "n_signal": 1456141,
+      "n_noise": 180087,
+      "STCD": 0.9414579932133346,
+      "time-surface": 0.9080047833912589,
+      "BAF": 0.8886881051804567,
+      "KNoise": 0.5333998802129029,
+      "MLPF": 0.8993955011537469
+    },
+    {
+      "_file": "driving",
+      "noise_kind": "synthetic",
+      "noise_hz": 3.0,
+      "n_signal": 1456141,
+      "n_noise": 540049,
+      "STCD": 0.9289425756138252,
+      "time-surface": 0.8952360875326619,
+      "BAF": 0.8625567040644758,
+      "KNoise": 0.5284565226770496,
+      "MLPF": 0.8978049210121531
+    },
+    {
+      "_file": "driving",
+      "noise_kind": "synthetic",
+      "noise_hz": 5.0,
+      "n_signal": 1456141,
+      "n_noise": 899974,
+      "STCD": 0.9191760341559174,
+      "time-surface": 0.8856459224582254,
+      "BAF": 0.8416042642255933,
+      "KNoise": 0.5252260975162938,
+      "MLPF": 0.8951581233327347
+    },
+    {
+      "_file": "driving",
+      "noise_kind": "real",
+      "noise_hz": 1.0546484921295554,
+      "n_signal": 1456141,
+      "n_noise": 189746,
+      "STCD": 0.927248584110333,
+      "time-surface": 0.9004261580847848,
+      "BAF": 0.8758190688079583,
+      "KNoise": 0.5325276686803931,
+      "MLPF": 0.8933894746109902
+    },
+    {
+      "_file": "hotel-bar",
+      "noise_kind": "synthetic",
+      "noise_hz": 1.0,
+      "n_signal": 221908,
+      "n_noise": 180087,
+      "STCD": 0.9632477216493829,
+      "time-surface": 0.9647604748647414,
+      "BAF": 0.9514133924456957,
+      "KNoise": 0.5618443828221258,
+      "MLPF": 0.9583600909039995
+    },
+    {
+      "_file": "hotel-bar",
+      "noise_kind": "synthetic",
+      "noise_hz": 3.0,
+      "n_signal": 221908,
+      "n_noise": 540049,
+      "STCD": 0.9380746933107321,
+      "time-surface": 0.9462856904714512,
+      "BAF": 0.9141180791796181,
+      "KNoise": 0.5424799829312433,
+      "MLPF": 0.9554262183991301
+    },
+    {
+      "_file": "hotel-bar",
+      "noise_kind": "synthetic",
+      "noise_hz": 5.0,
+      "n_signal": 221908,
+      "n_noise": 899974,
+      "STCD": 0.9192845191065955,
+      "time-surface": 0.932797225743882,
+      "BAF": 0.8850998966560943,
+      "KNoise": 0.5331393168633832,
+      "MLPF": 0.9513446916887676
+    },
+    {
+      "_file": "hotel-bar",
+      "noise_kind": "real",
+      "noise_hz": 1.054656528796828,
+      "n_signal": 221908,
+      "n_noise": 189752,
+      "STCD": 0.9380495415958002,
+      "time-surface": 0.9547569917120746,
+      "BAF": 0.9342606991341936,
+      "KNoise": 0.5585998217676198,
+      "MLPF": 0.9501004420857148
+    }
+  ],
+  "win_s": 2.0,
+  "seed": 0,
+  "config": "k=3, tau=8ms, theta=1.5 (paper-fixed, zero-shot)"
+}
